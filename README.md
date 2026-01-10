@@ -16,8 +16,6 @@ A Python client library for [Zoro-DB](https://github.com/rajathshttgr/zoro-db), 
 pip install zoro-client
 ```
 
----
-
 ## Connecting to Zoro-DB Server
 
 ```python
