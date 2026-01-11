@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "zoro-client"
+dynamic = ["version"]
+description = "A Python client library for Zoro-DB, a vector search engine."
+readme = "README.md"
+license = "MIT"
+
+requires-python = ">=3.8"
+authors = [{name = "Rajath Shettigar", email = "rrshttgr@gmail.com"}]
+keywords = ["vector", "search", "client", "zoro-db", "database"]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+dependencies = ["httpx"]
+
+[project.optional-dependencies]
+gui = ["PyQt5"]
+cli = [
+  "rich",
+  "click",
+]
+
+[project.urls]
+Homepage = "https://github.com/rajathshttgr/zoro-client.git"
+Documentation = "https://github.com/rajathshttgr/zoro-client/blob/main/docs/Documentation.md"
+Repository = "https://github.com/rajathshttgr/zoro-client.git"
+"Bug Tracker" = "https://github.com/rajathshttgr/zoro-client/blob/main/docs/ISSUES.md"
+Changelog = "https://github.com/rajathshttgr/zoro-client/blob/main/docs/CHANGELOG.md"
+
+[project.scripts]
+spam-cli = "spam:main_cli"
+
+[project.gui-scripts]
+spam-gui = "spam:main_gui"
+
+[project.entry-points."spam.magical"]
+tomatoes = "spam:main_tomatoes"
