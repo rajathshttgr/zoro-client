@@ -8,8 +8,8 @@ class ZoroClient:
 
         if url is None:
             self.url = f"http://{host}:{port}"
-
-        self.url = url
+        else:
+            self.url = url
 
     def testCall(self):
         return self.url
