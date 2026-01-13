@@ -31,3 +31,17 @@ client = ZoroClient(url="http://localhost:6464")
 ```bash
 docker run -p 6464:6464 ghcr.io/rajathshttgr/zoro-db:dev
 ```
+
+## Self-Managed Embeddings
+
+You generate embeddings yourself and store raw vectors.
+
+```python
+from zoro_client.models import VectorConfig, Distance
+
+# Create collection
+client.create_collection(
+    name="vectors",
+    vector_config=VectorConfig(size=100, distance=Distance.COSINE)
+)
+```
