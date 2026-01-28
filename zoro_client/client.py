@@ -15,10 +15,10 @@ class ZoroClient:
 
         self.api = HTTPClient(self.url)
 
-    def create_collection(self, collection_name, dimension, distance):
+    def create_collection(self, collection_name, vector_config={}):
         self.collection_name = collection_name
-        self.dimension = dimension
-        self.distance = distance
+        self.dimension = vector_config.dimension
+        self.distance = vector_config.distance
         success = self.api.create_collection(
             collection_name=self.collection_name,
             dimension=self.dimension,
@@ -29,10 +29,10 @@ class ZoroClient:
         else:
             return {"status": False, "message": "failed to create collection"}
 
-    def recreate_collection(self, collection_name, dimension, distance):
+    def recreate_collection(self, collection_name, vector_config={}):
         self.collection_name = collection_name
-        self.dimension = dimension
-        self.distance = distance
+        self.dimension = vector_config.dimension
+        self.distance = vector_config.distance
         success = self.api.recreate_collection(
             collection_name=self.collection_name,
             dimension=self.dimension,
@@ -74,4 +74,14 @@ class ZoroClient:
         self.ids = ids
         return self.api.delete_points(
             collection_name=self.collection_name, ids=self.ids
+        )
+
+    def search(self, collection_name="", query_vectors=[], limit=1):
+        self.collection_name = collection_name
+        self.query_vectors = query_vectors
+        self.limit = limit
+        return self.api.search_query(
+            collection_name=self.collection_name,
+            query_vectors=self.query_vectors,
+            limit=self.limit,
         )

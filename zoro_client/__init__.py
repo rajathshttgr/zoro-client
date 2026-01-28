@@ -1,2 +1,2 @@
 from .client import ZoroClient
-from .model import Distance
+from .model import VectorConfig, Distance

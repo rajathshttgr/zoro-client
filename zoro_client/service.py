@@ -213,3 +213,32 @@ class HTTPClient:
         else:
             error_message = result.get("error")
             return {"error": error_message}
+
+    def search_query(self, collection_name="", query_vectors=[], limit=1):
+        response = self.get(endpoint=f"/collections/{collection_name}")
+        result = response.get("result")
+        if result == None:
+            return {"error": "failed to retrive collection info"}
+
+        if result and result.get("collection_name") != collection_name:
+            return {"error": "collection not found"}
+
+        dimension = int(result.get("dimension"))
+
+        if len(query_vectors) != dimension:
+            return {"error": "mismatch in vector size"}
+
+        payload = {"vectors": query_vectors, "limit": limit}
+
+        query_result = self.post(
+            endpoint=f"/collections/{collection_name}/points/search", body=payload
+        )
+
+        if query_result == None:
+            return {"error": "something went wrong"}
+
+        if query_result and query_result.get("error"):
+            error_message = query_result.get("error")
+            return {"error": error_message}
+        else:
+            return query_result
