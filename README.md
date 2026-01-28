@@ -37,11 +37,43 @@ docker run -p 6464:6464 ghcr.io/rajathshttgr/zoro-db:dev
 You generate embeddings yourself and store raw vectors.
 
 ```python
-from zoro_client.models import VectorConfig, Distance
+from zoro_client import VectorConfig, Distance
 
 # Create collection
 client.create_collection(
-    name="vectors",
+    collection_name="test",
     vector_config=VectorConfig(size=100, distance=Distance.COSINE)
 )
+
+# Upsert points
+
+import numpy as np
+
+vectors = np.random.rand(5, 100).tolist()
+
+payloads = [
+    {"document": "LangChain integration"},
+    {"document": "LlamaIndex integration"},
+    {"document": "Hybrid search"},
+    {"document": "Fast ANN search"},
+    {"document": "Python for Machine Learning"},
+]
+
+response = client.upsert_points(
+    collection_name="test",
+    vectors=vectors,
+    ids=[12, 4, 34, 23, 2],
+    payload=payloads,
+)
+
+
+# search query
+
+results = client.search(
+    collection_name="test",
+    vector=np.random.rand(100),
+    limit=2
+)
+
+print(results)
 ```
