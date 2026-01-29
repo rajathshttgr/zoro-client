@@ -2,8 +2,8 @@
 
 | Method                      | Explanation                                                |
 | --------------------------- | ---------------------------------------------------------- |
-| **Zoro-managed embeddings** | You pass text, Zoro handles embeddings internally          |
 | **Self-Managed embeddings** | You generate vectors yourself and store them, full control |
+| **Zoro-managed embeddings** | You pass text, Zoro handles embeddings internally          |
 
 ## Installation
 
@@ -29,12 +29,72 @@ client = ZoroClient(url="http://localhost:6464")
 docker run -p 6464:6464 ghcr.io/rajathshttgr/zoro-db:dev
 ```
 
+## Self-Managed Embeddings
+
+You generate embeddings yourself and store raw vectors.
+
+```python
+import numpy as np
+from zoro_client import VectorConfig, Distance
+
+# Create collection
+client.create_collection(
+    collection_name="test",
+    vector_config=VectorConfig(size=100, distance=Distance.COSINE),
+)
+
+# Upsert points
+vectors = np.random.rand(5, 100).tolist()
+
+payloads = [
+    {"document": "LangChain integration"},
+    {"document": "LlamaIndex integration"},
+    {"document": "Hybrid search"},
+    {"document": "Fast ANN search"},
+    {"document": "Python for Machine Learning"},
+]
+
+client.upsert_points(
+    collection_name="test",
+    vectors=vectors,
+    ids=[12, 4, 34, 23, 2],
+    payloads=payloads,
+)
+
+# search query
+results = client.search(
+    collection_name="test", query_vector=np.random.rand(100).tolist(), limit=2
+)
+
+print(results)
+
+```
+
+### Additional methods
+
+```python
+# Recreate collection if collection already exists
+response = client.recreate_collection(
+    collection_name="test",
+    vector_config=VectorConfig(size=100, distance=Distance.COSINE),
+)
+
+# delete existing collection
+response = client.delete_collection(collection_name="test")
+
+# list all collections
+print(client.list_collections())
+
+# delete points
+response = client.delete_points(collection_name="test", ids=[12, 4, 34])
+```
+
 ## Zoro-Managed Embeddings
 
 Zoro generates embeddings internally using your API key.
 
 ```python
-from zoro_client.models import EmbeddingModelConfig, VectorConfig, Distance, TextInput
+from zoro_client import EmbeddingModelConfig, VectorConfig, Distance, TextInput
 
 # Configure embedding model
 embedding_model = EmbeddingModelConfig(
@@ -52,7 +112,7 @@ client.create_collection(
     )
 )
 
-# Insert documents
+# Upsert points
 client.upsert(
     collection="docs",
     vectors=[
@@ -64,54 +124,8 @@ client.upsert(
 # Search
 results = client.search(
     collection="docs",
-    query=TextInput(text="Vector DB integrations", model=embedding_model),
+    query_vector=TextInput(text="Vector DB integrations", model=embedding_model),
     limit=3
-)
-
-print(results)
-```
-
-## Self-Managed Embeddings
-
-You generate embeddings yourself and store raw vectors.
-
-```python
-import numpy as np
-from zoro_client.models import VectorConfig, Distance, Point
-
-# Create collection
-client.create_collection(
-    name="vectors",
-    vector_config=VectorConfig(size=100, distance=Distance.COSINE)
-)
-
-# Insert vectors
-
-vectors = np.random.rand(4, 100)
-
-payloads = [
-    {"document": "LangChain integration"},
-    {"document": "LlamaIndex integration"},
-    {"document": "Hybrid search"},
-    {"document": "Fast ANN search"},
-]
-
-points = [
-    Point(
-        id=i,
-        vector=v.tolist(),
-        payload=payloads[i],
-    )
-    for i, v in enumerate(vectors)
-]
-
-client.upsert(collection="vectors", points=points)
-
-# Search
-results = client.search(
-    collection="vectors",
-    vector=np.random.rand(100),
-    limit=2
 )
 
 print(results)

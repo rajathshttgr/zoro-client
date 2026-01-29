@@ -46,7 +46,6 @@ client.create_collection(
 )
 
 # Upsert points
-
 import numpy as np
 
 vectors = np.random.rand(5, 100).tolist()
@@ -67,10 +66,15 @@ client.upsert_points(
 )
 
 # search query
-
 results = client.search(
     collection_name="test", query_vector=np.random.rand(100).tolist(), limit=2
 )
 
 print(results)
+
 ```
+
+## Documentation
+
+- For usage examples and a walkthrough of available methods, see the [Usage Examples](https://github.com/rajathshttgr/zoro-client/blob/main/docs/USAGE_EXAMPLES.md).
+- For API Documentations refer [API Reference](https://github.com/rajathshttgr/zoro-client/blob/main/docs/API_DOCS.md).
