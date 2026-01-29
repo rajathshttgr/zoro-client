@@ -1,244 +1,152 @@
-import requests
+import numpy as np
 
 
-class HTTPClient:
-    def __init__(self, url):
-        self.url = url
+class CollectionService:
+    def __init__(self, api):
+        self.api = api
 
-    def get(self, endpoint="/"):
-        url_path = self.url + endpoint
-        response = requests.get(url_path)
+    def _validate_collection_args(self, name, distance, dimension):
+        if not (1 <= len(name) <= 36):
+            return "Collection name must be 1–36 characters"
 
-        return response.json()
+        VALID_DISTANCES = {"cosine", "dot", "l2"}
+        if distance.lower() not in VALID_DISTANCES:
+            return "Distance must be cosine, dot, or l2"
 
-    def post(self, endpoint="/", body={}):
-        url_path = self.url + endpoint
-
-        response = requests.post(url_path, json=body)
-
-        return response.json()
-
-    def delete(self, endpoint="/", body={}):
-        url_path = self.url + endpoint
-        response = requests.delete(url_path, json=body)
-
-        return response.json()
-
-    def create_collection(self, collection_name="", distance="", dimension=100):
         if dimension <= 0 or dimension > 9999:
-            print("Ideal dimension range is 1 to 9999")
-            return False
+            return "Dimension must be between 1 and 9999"
 
-        distance_enum = ["cosine", "dot", "l2"]
-        isValid = False
-        for dist in distance_enum:
-            if dist == distance.lower():
-                isValid = True
+        return None
 
-        if not isValid:
-            print("Enter valid distance matrics COSINE/DOT/L2")
-            return False
+    def _normalize_vectors(self, vectors):
+        """
+        Accepts:
+        - List[List[float]]
+        - np.ndarray (2D)
 
-        if len(collection_name) < 1 or len(collection_name) > 36:
-            print(
-                "Invalid collection name, enter collection name of 1 to 36 character long"
-            )
-            return False
 
-        # get collection
-        response = self.get(endpoint=f"/collections/{collection_name}")
+        Returns:
+        - List[List[float]]
+        """
 
-        result = response.get("result")
+        if isinstance(vectors, np.ndarray):
+            if vectors.ndim != 2:
+                raise ValueError("Vectors ndarray must be 2-dimensional")
+            return vectors.tolist()
 
-        if result and result.get("collection_name") == collection_name:
-            print("Collection name already exists, please delete to recreate.")
-            return False
+        if isinstance(vectors, list):
+            if not all(isinstance(v, list) for v in vectors):
+                raise TypeError("Vectors must be a list of lists")
+            return vectors
 
-        # create collection
+        raise TypeError("Vectors must be a list of lists or a numpy ndarray")
+
+    def create_collection(self, collection_name, distance, dimension=100):
+
+        error = self._validate_collection_args(collection_name, distance, dimension)
+
+        if error:
+            return {"error": error}
+
+        existing = self.api.get_collection(collection_name).get("result")
+
+        if existing:
+            return {"error": "Collection already exists"}
+
         payload = {
             "collection_name": collection_name,
             "dimension": dimension,
             "distance": distance.lower(),
         }
 
-        response = self.post("/collections/", body=payload)
+        return self.api.create_collection(payload)
 
-        return True
+    def recreate_collection(self, collection_name, distance, dimension=100):
 
-    def recreate_collection(self, collection_name="", distance="", dimension=100):
-        if dimension <= 0 or dimension > 9999:
-            print("Ideal dimension range is 1 to 9999")
-            return False
+        error = self._validate_collection_args(collection_name, distance, dimension)
 
-        distance_enum = ["cosine", "dot", "l2"]
-        isValid = False
-        for dist in distance_enum:
-            if dist == distance.lower():
-                isValid = True
+        if error:
+            return {"error": error}
 
-        if not isValid:
-            print("Enter valid distance matrics COSINE/DOT/L2")
-            return False
+        existing = self.api.get_collection(collection_name).get("result")
+        if existing:
+            self.api.delete_collection(collection_name)
 
-        if len(collection_name) < 1 or len(collection_name) > 36:
-            print(
-                "Invalid collection name, enter collection name of 1 to 36 character long"
-            )
-            return False
-
-        # get collection
-        response = self.get(endpoint=f"/collections/{collection_name}")
-
-        result = response.get("result")
-
-        if result and result.get("collection_name") == collection_name:
-            # if collection already exists delete
-            response = self.delete(endpoint=f"/collections/{collection_name}")
-            result_data = response.get("result")
-            if result_data and result_data.get("collection_name") == collection_name:
-                pass
-            else:
-                print("failed to delete the existing collection")
-                return False
-
-        # create collection
         payload = {
             "collection_name": collection_name,
             "dimension": dimension,
             "distance": distance.lower(),
         }
 
-        response = self.post("/collections/", body=payload)
+        return self.api.create_collection(payload)
 
-        # if success return true
+    def delete_collection(self, collection_name):
 
-        return True
+        existing = self.api.get_collection(collection_name).get("result")
+        if not existing:
+            return {"error": "Collection not found"}
 
-    def delete_collection(self, collection_name=""):
-        # get collection
-        response = self.get(endpoint=f"/collections/{collection_name}")
-
-        result = response.get("result")
-
-        if result and result.get("collection_name") == collection_name:
-            # if collection already exists delete
-            response = self.delete(endpoint=f"/collections/{collection_name}")
-            result_data = response.get("result")
-            if result_data and result_data.get("collection_name") == collection_name:
-                print("Collection deleted successfully")
-                return True
-            else:
-                print("failed to delete the existing collection")
-                return False
-        else:
-            print("Collection doesn't exist in the database")
-            return False
+        return self.api.delete_collection(collection_name)
 
     def list_collection(self):
         # list collections
-        response = self.get(endpoint=f"/collections/")
-        return response
+        return self.api.list_collections()
 
-    def upsert_points(self, collection_name="", vectors=[], ids=[], payload={}):
-        response = self.get(endpoint=f"/collections/{collection_name}")
-        result = response.get("result")
-        if result == None:
-            return {"error": "failed to retrive collection info"}
+    def upsert_points(self, collection_name, vectors, ids, payloads):
 
-        if result and result.get("collection_name") != collection_name:
-            return {"error": "collection not found"}
+        collection = self.api.get_collection(collection_name).get("result")
+        if not collection:
+            return {"error": "Collection not found"}
 
-        dimension = int(result.get("dimension"))
+        dim = int(collection["dimension"])
 
-        if len(vectors[0]) != dimension:
-            return {"error": f"expected vector dimension is {dimension}"}
-        else:
-            for v in vectors:
-                if len(v) != dimension:
-                    return {"error": "inconsistent vectors dimension"}
+        try:
+            vectors = self._normalize_vectors(vectors)
+        except (TypeError, ValueError) as e:
+            return {"error": str(e)}
 
-        if len(vectors) == len(ids) == len(payload):
-            pass
-        else:
-            return {
-                "error": "id counts doesn't match with vector size and payload size"
-            }
+        if any(len(v) != dim for v in vectors):
+            return {"error": f"Vector dimension must be {dim}"}
 
-        # upsert points
-        payload = {
+        if not (len(vectors) == len(ids) == len(payloads)):
+            return {"error": "Vectors, ids and payload size mismatch"}
+
+        body = {
             "vectors": vectors,
             "ids": ids,
-            "payload": payload,
+            "payload": payloads,
         }
 
-        response = self.post(f"/collections/{collection_name}/points", body=payload)
+        return self.api.upsert_points(collection_name, body)
 
-        result = response.get("result")
+    def delete_points(self, collection_name, ids):
+        collection = self.api.get_collection(collection_name).get("result")
+        if not collection:
+            return {"error": "Collection not found"}
 
-        if result == None:
-            return {"error": "something went wrong"}
+        if not ids:
+            return {"error": "IDs required"}
 
-        if result and result.get("status") == "success":
-            return {"message": "Points upsert successfull", "result": result}
-        else:
-            error_message = result.get("error")
-            return {"error": error_message}
+        return self.api.delete_points(collection_name, {"ids": ids})
 
-    def delete_points(self, collection_name="", ids=[]):
-        get_response = self.get(endpoint=f"/collections/{collection_name}")
-        result = get_response.get("result")
-        if result == None:
-            return {"error": "failed to retrive collection info"}
+    def search_query(self, collection_name, query_vector, limit=1):
 
-        if result and result.get("collection_name") != collection_name:
-            return {"error": "collection not found"}
+        collection = self.api.get_collection(collection_name).get("result")
+        if not collection:
+            return {"error": "Collection not found"}
 
-        if len(ids) < 1:
-            return {"error": "Please include points IDs to delete"}
+        #  Normalize numpy arrays
+        if isinstance(query_vector, np.ndarray):
+            query_vector = query_vector.tolist()
 
-        # delete points
-        payload = {"ids": ids}
+        # Validate type after normalization
+        if not isinstance(query_vector, list):
+            return {"error": "query_vector must be a list or numpy array"}
 
-        delete_response = self.delete(
-            endpoint=f"/collections/{collection_name}/points", body=payload
+        if len(query_vector) != int(collection["dimension"]):
+            return {"error": "Vector dimension mismatch"}
+
+        return self.api.search_points(
+            collection_name,
+            {"vectors": query_vector, "limit": limit},
         )
-
-        result = delete_response.get("result")
-
-        if result == None:
-            return {"error": "something went wrong"}
-
-        if result and result.get("status") == "success":
-            return {"message": "Points deleted successfully", "result": result}
-        else:
-            error_message = result.get("error")
-            return {"error": error_message}
-
-    def search_query(self, collection_name="", query_vectors=[], limit=1):
-        response = self.get(endpoint=f"/collections/{collection_name}")
-        result = response.get("result")
-        if result == None:
-            return {"error": "failed to retrive collection info"}
-
-        if result and result.get("collection_name") != collection_name:
-            return {"error": "collection not found"}
-
-        dimension = int(result.get("dimension"))
-
-        if len(query_vectors) != dimension:
-            return {"error": "mismatch in vector size"}
-
-        payload = {"vectors": query_vectors, "limit": limit}
-
-        query_result = self.post(
-            endpoint=f"/collections/{collection_name}/points/search", body=payload
-        )
-
-        if query_result == None:
-            return {"error": "something went wrong"}
-
-        if query_result and query_result.get("error"):
-            error_message = query_result.get("error")
-            return {"error": error_message}
-        else:
-            return query_result

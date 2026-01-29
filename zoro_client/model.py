@@ -1,7 +1,7 @@
-class Distance:
-    def __init__(self):
-        return self
+from enum import Enum
 
+
+class Distance(str, Enum):
     DOT = "Dot"
     COSINE = "Cosine"
     L2 = "L2"

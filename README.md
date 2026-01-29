@@ -59,20 +59,17 @@ payloads = [
     {"document": "Python for Machine Learning"},
 ]
 
-response = client.upsert_points(
+client.upsert_points(
     collection_name="test",
     vectors=vectors,
     ids=[12, 4, 34, 23, 2],
-    payload=payloads,
+    payloads=payloads,
 )
-
 
 # search query
 
 results = client.search(
-    collection_name="test",
-    vector=np.random.rand(100),
-    limit=2
+    collection_name="test", query_vector=np.random.rand(100).tolist(), limit=2
 )
 
 print(results)
