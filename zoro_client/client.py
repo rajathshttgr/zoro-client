@@ -1,4 +1,6 @@
-from .service import HTTPClient
+from .http_client import HTTPClient
+from .api import APIService
+from .service import CollectionService
 
 
 class ZoroClient:
@@ -13,75 +15,52 @@ class ZoroClient:
                 self.port = 6464
             self.url = f"http://{host}:{port}"
 
-        self.api = HTTPClient(self.url)
+        client = HTTPClient(self.url)
+        api = APIService(client)
+        self.collection = CollectionService(api)
 
-    def create_collection(self, collection_name, vector_config={}):
-        self.collection_name = collection_name
-        self.dimension = vector_config.dimension
-        self.distance = vector_config.distance
-        success = self.api.create_collection(
-            collection_name=self.collection_name,
-            dimension=self.dimension,
-            distance=self.distance,
+    def create_collection(self, collection_name, vector_config):
+        dimension = vector_config.dimension
+        distance = vector_config.distance
+        return self.collection.create_collection(
+            collection_name=collection_name,
+            dimension=dimension,
+            distance=distance,
         )
-        if success:
-            return {"status": True, "message": "collection created successfully"}
-        else:
-            return {"status": False, "message": "failed to create collection"}
 
-    def recreate_collection(self, collection_name, vector_config={}):
-        self.collection_name = collection_name
-        self.dimension = vector_config.dimension
-        self.distance = vector_config.distance
-        success = self.api.recreate_collection(
-            collection_name=self.collection_name,
-            dimension=self.dimension,
-            distance=self.distance,
+    def recreate_collection(self, collection_name, vector_config):
+        dimension = vector_config.dimension
+        distance = vector_config.distance
+        return self.collection.recreate_collection(
+            collection_name=collection_name,
+            dimension=dimension,
+            distance=distance,
         )
-        if success:
-            return {"status": True, "message": "collection recreated successfully"}
-        else:
-            return {"status": False, "message": "failed to recreate collection"}
 
     def delete_collection(self, collection_name):
-        self.collection_name = collection_name
-        success = self.api.delete_collection(
-            collection_name=self.collection_name,
+        return self.collection.delete_collection(
+            collection_name=collection_name,
         )
-        if success:
-            return {"status": True, "message": "collection deleted successfully"}
-        else:
-            return {"status": False, "message": "collection deletion failed"}
 
     def list_collections(self):
         """Add filter by dimension, distance, name starting with and name ending with ex. `%ies` or `mov%`"""
-        return self.api.list_collection()
+        return self.collection.list_collection()
 
-    def upsert_points(self, collection_name="", vectors=[], ids=[], payload=[]):
-        self.collection_name = collection_name
-        self.vectors = vectors
-        self.ids = ids
-        self.payload = payload
-        return self.api.upsert_points(
-            collection_name=self.collection_name,
-            vectors=self.vectors,
-            ids=self.ids,
-            payload=self.payload,
+    def upsert_points(self, collection_name, vectors, ids, payloads):
+
+        return self.collection.upsert_points(
+            collection_name=collection_name,
+            vectors=vectors,
+            ids=ids,
+            payloads=payloads,
         )
 
-    def delete_points(self, collection_name="", ids=[]):
-        self.collection_name = collection_name
-        self.ids = ids
-        return self.api.delete_points(
-            collection_name=self.collection_name, ids=self.ids
-        )
+    def delete_points(self, collection_name, ids):
+        return self.collection.delete_points(collection_name=collection_name, ids=ids)
 
-    def search(self, collection_name="", query_vectors=[], limit=1):
-        self.collection_name = collection_name
-        self.query_vectors = query_vectors
-        self.limit = limit
-        return self.api.search_query(
-            collection_name=self.collection_name,
-            query_vectors=self.query_vectors,
-            limit=self.limit,
+    def search(self, collection_name, query_vector, limit=1):
+        return self.collection.search_query(
+            collection_name=collection_name,
+            query_vector=query_vector,
+            limit=limit,
         )
