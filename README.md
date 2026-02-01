@@ -4,7 +4,7 @@
 
 A Python client library for [Zoro-DB](https://github.com/rajathshttgr/zoro-db), a vector search engine.
 
-[![PyPI](https://badge.fury.io/py/zoro-client.svg)](https://pypi.org/project/zoro-client/)
+[![PyPI](https://badge.fury.io/py/zoro-client.svg?cache=1)](https://pypi.org/project/zoro-client/)
 [![API Docs](https://img.shields.io/badge/Docs-OpenAPI%203.0-success)](https://github.com/rajathshttgr/zoro-db/blob/main/docs/API_DOCS.md)
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/rajathshttgr/zoro-client/blob/main/LICENSE)
 
@@ -77,4 +77,4 @@ print(results)
 ## Documentation
 
 - For usage examples and a walkthrough of available methods, see the [Usage Examples](https://github.com/rajathshttgr/zoro-client/blob/main/docs/USAGE_EXAMPLES.md).
-- For API Documentations refer [API Reference](https://github.com/rajathshttgr/zoro-client/blob/main/docs/API_DOCS.md).
+- For detailed API information, refer to the [API Reference](https://github.com/rajathshttgr/zoro-client/blob/main/docs/API_DOCS.md).
