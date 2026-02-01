@@ -77,4 +77,4 @@ print(results)
 ## Documentation
 
 - For usage examples and a walkthrough of available methods, see the [Usage Examples](https://github.com/rajathshttgr/zoro-client/blob/main/docs/USAGE_EXAMPLES.md).
-- For API Documentations refer [API Reference](https://github.com/rajathshttgr/zoro-client/blob/main/docs/API_DOCS.md).
+- For detailed API information, refer to the [API Reference](https://github.com/rajathshttgr/zoro-client/blob/main/docs/API_DOCS.md).
