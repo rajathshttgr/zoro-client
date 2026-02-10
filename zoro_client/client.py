@@ -1,3 +1,4 @@
+import requests
 from .http_client import HTTPClient
 from .api import APIService
 from .service import CollectionService
@@ -15,9 +16,20 @@ class ZoroClient:
                 self.port = 6464
             self.url = f"http://{host}:{port}"
 
+        if not self._is_server_reachable(self.url):
+            raise ConnectionError(f"Unable to connect to server at {self.url}")
+
         client = HTTPClient(self.url)
         api = APIService(client)
         self.collection = CollectionService(api)
+
+    def _is_server_reachable(self, url):
+        # Helper method to check if the server is reachable.
+        try:
+            response = requests.head(url, timeout=5)
+            return response.status_code // 100 == 2
+        except requests.exceptions.RequestException:
+            return False
 
     def create_collection(self, collection_name, vector_config):
         dimension = vector_config.dimension
