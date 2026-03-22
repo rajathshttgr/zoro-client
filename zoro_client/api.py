@@ -9,8 +9,8 @@ class APIService:
     def list_collections(self):
         return self.client.get("/collections/")
 
-    def create_collection(self, payload):
-        return self.client.post("/collections/", payload)
+    def create_collection(self, collection_name, payload):
+        return self.client.post(f"/collections/{collection_name}", payload)
 
     def delete_collection(self, name):
         return self.client.delete(f"/collections/{name}")

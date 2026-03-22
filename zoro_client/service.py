@@ -54,12 +54,13 @@ class CollectionService:
             return {"error": "Collection already exists"}
 
         payload = {
-            "collection_name": collection_name,
-            "dimension": dimension,
-            "distance": distance.lower(),
+            "vectors": {
+                "size":  dimension,
+                "distance": distance.lower(),
+            }
         }
 
-        return self.api.create_collection(payload)
+        return self.api.create_collection(collection_name, payload)
 
     def recreate_collection(self, collection_name, distance, dimension=100):
 
@@ -73,12 +74,13 @@ class CollectionService:
             self.api.delete_collection(collection_name)
 
         payload = {
-            "collection_name": collection_name,
-            "dimension": dimension,
-            "distance": distance.lower(),
+            "vectors": {
+                "size":  dimension,
+                "distance": distance.lower(),
+            }
         }
 
-        return self.api.create_collection(payload)
+        return self.api.create_collection(collection_name, payload)
 
     def delete_collection(self, collection_name):
 
@@ -98,7 +100,7 @@ class CollectionService:
         if not collection:
             return {"error": "Collection not found"}
 
-        dim = int(collection["dimension"])
+        dim = int(collection["config"]["vectors"]["size"])
 
         try:
             vectors = self._normalize_vectors(vectors)
@@ -143,7 +145,7 @@ class CollectionService:
         if not isinstance(query_vector, list):
             return {"error": "query_vector must be a list or numpy array"}
 
-        if len(query_vector) != int(collection["dimension"]):
+        if len(query_vector) != int(collection["config"]["vectors"]["size"]):
             return {"error": "Vector dimension mismatch"}
 
         return self.api.search_points(
