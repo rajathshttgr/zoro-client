@@ -96,22 +96,26 @@ class CollectionService:
 
     def upsert_points(self, collection_name, vectors, ids, payloads):
 
-        collection = self.api.get_collection(collection_name).get("result")
-        if not collection:
-            return {"error": "Collection not found"}
+        # this validations are handled by the server
+        # collection = self.api.get_collection(collection_name).get("result")
+        # if not collection:
+        #     return {"error": "Collection not found"}
 
-        dim = int(collection["config"]["vectors"]["size"])
+        # dim = int(collection["config"]["vectors"]["size"])
 
         try:
             vectors = self._normalize_vectors(vectors)
         except (TypeError, ValueError) as e:
             return {"error": str(e)}
 
-        if any(len(v) != dim for v in vectors):
-            return {"error": f"Vector dimension must be {dim}"}
+        # if any(len(v) != dim for v in vectors):
+        #     return {"error": f"Vector dimension must be {dim}"}
 
-        if not (len(vectors) == len(ids) == len(payloads)):
-            return {"error": "Vectors, ids and payload size mismatch"}
+        if not (len(vectors) == len(ids)):
+            return {"error": "Vectors and ids size mismatch"}
+        
+        if payloads and not (len(ids) == len(payloads)):
+            return {"error": "Vectors and payloads size mismatch"}
 
         body = {
             "vectors": vectors,
