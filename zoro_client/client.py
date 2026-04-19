@@ -55,7 +55,7 @@ class ZoroClient:
         )
 
     def list_collections(self):
-        """Add filter by dimension, distance, name starting with and name ending with ex. `%ies` or `mov%`"""
+        # TODO: Add filter by dimension, distance, name starting with and name ending with ex. `%ies` or `mov%`
         return self.collection.list_collection()
 
     def upsert_points(self, collection_name, vectors, ids, payloads):

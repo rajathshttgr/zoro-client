@@ -48,11 +48,6 @@ class CollectionService:
         if error:
             return {"error": error}
 
-        existing = self.api.get_collection(collection_name).get("result")
-
-        if existing:
-            return {"error": "Collection already exists"}
-
         payload = {
             "vectors": {
                 "size":  dimension,
@@ -84,9 +79,8 @@ class CollectionService:
 
     def delete_collection(self, collection_name):
 
-        existing = self.api.get_collection(collection_name).get("result")
-        if not existing:
-            return {"error": "Collection not found"}
+        if len(collection_name)==0:
+            return {"error": "Collection Name Cannot be empty string"}
 
         return self.api.delete_collection(collection_name)
 
@@ -96,50 +90,57 @@ class CollectionService:
 
     def upsert_points(self, collection_name, vectors, ids, payloads):
 
-        # this validations are handled by the server
-        # collection = self.api.get_collection(collection_name).get("result")
-        # if not collection:
-        #     return {"error": "Collection not found"}
-
-        # dim = int(collection["config"]["vectors"]["size"])
+        if len(collection_name)==0:
+            return {"error": "Collection Name Cannot be empty string"}
+        
+        if any(len(v) ==0 for v in vectors):
+            return {"error": f"Vectors cannot be empty"}
+        
+        if any(i<0 for i in ids):
+            return {"error": f"Only unsigned integers are allowed as point ID"}
 
         try:
             vectors = self._normalize_vectors(vectors)
         except (TypeError, ValueError) as e:
             return {"error": str(e)}
 
-        # if any(len(v) != dim for v in vectors):
-        #     return {"error": f"Vector dimension must be {dim}"}
+        Points=[]
 
-        if not (len(vectors) == len(ids)):
-            return {"error": "Vectors and ids size mismatch"}
-        
-        if payloads and not (len(ids) == len(payloads)):
-            return {"error": "Vectors and payloads size mismatch"}
+        for i in range(len(ids)):
+            point = {
+                "id": ids[i],
+                "vector": vectors[i],
+            }
+            # handle payloads if provided
+            if payloads:
+                point["payload"] = payloads[i]
+            else:
+                point["payload"] = None
 
-        body = {
-            "vectors": vectors,
-            "ids": ids,
-            "payload": payloads,
-        }
+            Points.append(point)
+
+        body = {"points":Points}        
 
         return self.api.upsert_points(collection_name, body)
 
     def delete_points(self, collection_name, ids):
-        collection = self.api.get_collection(collection_name).get("result")
-        if not collection:
-            return {"error": "Collection not found"}
+
+        if len(collection_name)==0:
+            return {"error": "Collection Name Cannot be empty string"}
 
         if not ids:
             return {"error": "IDs required"}
+        
+        if any(i<0 for i in ids):
+            return {"error": f"Only unsigned integers are allowed as point ID"}
 
         return self.api.delete_points(collection_name, {"ids": ids})
+    
 
     def search_query(self, collection_name, query_vector, limit=1):
 
-        collection = self.api.get_collection(collection_name).get("result")
-        if not collection:
-            return {"error": "Collection not found"}
+        if len(collection_name)==0:
+            return {"error": "Collection Name Cannot be empty string"}
 
         #  Normalize numpy arrays
         if isinstance(query_vector, np.ndarray):
@@ -148,9 +149,9 @@ class CollectionService:
         # Validate type after normalization
         if not isinstance(query_vector, list):
             return {"error": "query_vector must be a list or numpy array"}
-
-        if len(query_vector) != int(collection["config"]["vectors"]["size"]):
-            return {"error": "Vector dimension mismatch"}
+        
+        if limit > 100 :
+            return {"error": "max search query results set limit of 100 for standard retrival"}
 
         return self.api.search_points(
             collection_name,
